@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>นิพนธ์ฟาร์ม — Smart Sow System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --green-900: #173404; --green-800: #27500A; --green-700: #3B6D11;
+  --green-600: #639922; --green-500: #7AB52A; --green-400: #97C459;
+  --green-200: #C0DD97; --green-100: #D8EDB8; --green-50: #EAF3DE;
+  --amber-600: #854F0B; --amber-400: #BA7517; --amber-200: #FAC775; --amber-50: #FAEEDA;
+  --red-600: #A32D2D; --red-400: #E24B4A; --red-100: #F7C1C1; --red-50: #FCEBEB;
+  --teal-600: #0F6E56; --teal-400: #1D9E75; --teal-50: #E1F5EE;
+  --gray-900: #1a1a1a; --gray-800: #2C2C2A; --gray-700: #444441;
+  --gray-600: #5F5E5A; --gray-400: #888780; --gray-200: #D3D1C7;
+  --gray-100: #E8E6DF; --gray-50: #F4F2EB;
+  --bg: #F0EDE4; --surface: #FAFAF7; --card: #FFFFFF;
+  --text: #1C1B18; --text-muted: #5F5E5A; --text-hint: #888780;
+  --border: #D8D5CC; --border-light: #E8E6DE;
+  --radius: 12px; --radius-sm: 8px; --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── SCREEN MANAGER ── */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── LOGIN ── */
+#screen-login{background:var(--green-700);align-items:center;justify-content:center;padding:2rem 1.5rem}
+.login-card{background:var(--card);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:380px;box-shadow:var(--shadow-md)}
+.login-logo{text-align:center;margin-bottom:1.75rem}
+.login-logo .pig-icon{font-size:48px;display:block;margin-bottom:.5rem}
+.login-logo h1{font-size:1.5rem;font-weight:700;color:var(--green-700);letter-spacing:-.3px}
+.login-logo p{font-size:.85rem;color:var(--text-muted);margin-top:.25rem}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:.85rem;font-weight:600;color:var(--text-muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Sarabun',sans-serif;font-size:1rem;background:var(--surface);color:var(--text);transition:border-color .15s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--green-600);background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1.25rem;border:none;border-radius:var(--radius-sm);font-family:'Sarabun',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--green-700);color:#fff;width:100%}
+.btn-primary:hover{background:var(--green-800)}
+.btn-primary:active{transform:scale(.98)}
+.btn-secondary{background:var(--gray-100);color:var(--gray-800);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--gray-200)}
+.btn-danger{background:var(--red-50);color:var(--red-600);border:1.5px solid var(--red-100)}
+.btn-danger:hover{background:var(--red-100)}
+.btn-warning{background:var(--amber-50);color:var(--amber-600);border:1.5px solid var(--amber-200)}
+.btn-sm{padding:.45rem .85rem;font-size:.875rem}
+.btn-icon{width:40px;height:40px;padding:0;border-radius:var(--radius-sm);background:transparent;border:1.5px solid var(--border);font-size:1.1rem}
+.login-error{background:var(--red-50);color:var(--red-600);border:1px solid var(--red-100);border-radius:var(--radius-sm);padding:.625rem 1rem;font-size:.875rem;margin-bottom:1rem;display:none}
+
+/* ── APP LAYOUT ── */
+#screen-app{background:var(--bg)}
+.app-header{background:var(--green-800);color:#fff;padding:0 1rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.app-header h2{font-size:1.05rem;font-weight:600;letter-spacing:-.2px}
+.header-right{display:flex;align-items:center;gap:.5rem}
+.user-badge{background:rgba(255,255,255,.15);border-radius:20px;padding:.25rem .75rem;font-size:.8rem}
+.header-btn{background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:var(--radius-sm);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+.header-btn:hover{background:rgba(255,255,255,.2)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{background:var(--card);border-top:1.5px solid var(--border-light);display:flex;position:sticky;bottom:0;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:.6rem .25rem;cursor:pointer;background:transparent;border:none;color:var(--text-muted);font-family:'Sarabun',sans-serif;font-size:.7rem;font-weight:500;transition:color .15s;position:relative}
+.nav-item .nav-icon{font-size:1.35rem;line-height:1}
+.nav-item.active{color:var(--green-700)}
+.nav-item.active .nav-icon{filter:drop-shadow(0 1px 2px rgba(60,120,30,.3))}
+.nav-item .badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--red-400);color:#fff;font-size:.6rem;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center}
+
+/* ── PAGE CONTENT ── */
+.page{display:none;padding:1rem;padding-bottom:6rem;overflow-y:auto;flex:1}
+.page.active{display:block}
+.page-title{font-size:1.2rem;font-weight:700;color:var(--green-800);margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border-light);padding:1rem 1.125rem;box-shadow:var(--shadow)}
+.card+.card{margin-top:.75rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem}
+.card-title{font-size:.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:.4rem}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1rem}
+.kpi-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border-light);padding:.875rem 1rem;box-shadow:var(--shadow)}
+.kpi-label{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:.3rem}
+.kpi-value{font-size:1.75rem;font-weight:700;color:var(--green-700);font-family:'IBM Plex Mono',monospace;line-height:1}
+.kpi-sub{font-size:.75rem;color:var(--text-hint);margin-top:.2rem}
+.kpi-card.accent-amber .kpi-value{color:var(--amber-600)}
+.kpi-card.accent-teal .kpi-value{color:var(--teal-600)}
+.kpi-card.accent-red .kpi-value{color:var(--red-600)}
+
+/* ── STATUS PILLS ── */
+.status-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.status-pill{display:flex;align-items:center;gap:.35rem;padding:.35rem .75rem;border-radius:20px;font-size:.8rem;font-weight:600}
+.pill-open{background:#EAF3DE;color:var(--green-700)}
+.pill-served{background:#E1F5EE;color:var(--teal-600)}
+.pill-pregnant{background:var(--amber-50);color:var(--amber-600)}
+.pill-lactating{background:#FEE7E7;color:var(--red-600)}
+
+/* ── TASKS ── */
+.task-item{display:flex;align-items:flex-start;gap:.75rem;padding:.875rem 1rem;background:var(--card);border-radius:var(--radius);border-left:4px solid var(--green-400);border-top:1.5px solid var(--border-light);border-right:1.5px solid var(--border-light);border-bottom:1.5px solid var(--border-light);margin-bottom:.625rem;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s}
+.task-item:active{transform:scale(.99)}
+.task-item.urgent{border-left-color:var(--red-400);background:var(--red-50)}
+.task-icon{font-size:1.5rem;flex-shrink:0}
+.task-label{font-size:.9rem;font-weight:600;color:var(--text)}
+.task-due{font-size:.78rem;color:var(--text-muted);margin-top:.15rem}
+.task-badge{font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:.25rem}
+.badge-urgent{background:var(--red-100);color:var(--red-600)}
+.badge-upcoming{background:var(--green-50);color:var(--green-700)}
+.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--text-muted)}
+.empty-icon{font-size:3rem;display:block;margin-bottom:.75rem;opacity:.5}
+
+/* ── SOW LIST ── */
+.search-bar{display:flex;gap:.5rem;margin-bottom:.875rem}
+.search-bar input{flex:1;padding:.65rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Sarabun',sans-serif;font-size:.95rem;background:var(--card)}
+.filter-tabs{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.25rem;margin-bottom:.875rem;scrollbar-width:none}
+.filter-tabs::-webkit-scrollbar{display:none}
+.filter-tab{flex-shrink:0;padding:.4rem .875rem;border-radius:20px;border:1.5px solid var(--border);background:var(--card);color:var(--text-muted);font-family:'Sarabun',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap}
+.filter-tab.active{background:var(--green-700);color:#fff;border-color:var(--green-700)}
+.sow-item{display:flex;align-items:center;gap:.875rem;padding:.875rem 1rem;background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border-light);margin-bottom:.625rem;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s}
+.sow-item:active{transform:scale(.99)}
+.sow-avatar{width:44px;height:44px;border-radius:50%;background:var(--green-50);border:2px solid var(--green-200);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.sow-info{flex:1;min-width:0}
+.sow-tag{font-size:1rem;font-weight:700;color:var(--green-800)}
+.sow-meta{font-size:.78rem;color:var(--text-muted);margin-top:.1rem}
+.sow-status{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:10px}
+
+/* ── SOW DETAIL ── */
+.detail-header{background:var(--green-700);color:#fff;padding:1.25rem 1rem;border-radius:var(--radius) var(--radius) 0 0;margin:-1rem -1.125rem 1rem}
+.detail-header h3{font-size:1.3rem;font-weight:700}
+.detail-header p{font-size:.85rem;opacity:.8;margin-top:.2rem}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;margin-bottom:1rem}
+.info-item{}
+.info-label{font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
+.info-value{font-size:.95rem;font-weight:600;color:var(--text);margin-top:.1rem}
+.cycle-history{margin-top:.75rem}
+.cycle-row{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:.5rem;align-items:center;padding:.5rem .625rem;border-radius:var(--radius-sm);font-size:.8rem}
+.cycle-row:nth-child(even){background:var(--gray-50)}
+.cycle-row.header{font-weight:700;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;border-bottom:1.5px solid var(--border)}
+.cull-alert{background:var(--red-50);border:1.5px solid var(--red-100);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-bottom.875rem}
+.cull-alert-title{color:var(--red-600);font-weight:700;font-size:.875rem;margin-bottom:.25rem}
+.cull-alert-item{font-size:.8rem;color:var(--red-600);padding:.1rem 0}
+
+/* ── RECORD FORM ── */
+.form-section{margin-bottom:1.25rem}
+.form-section-title{font-size:.85rem;font-weight:700;color:var(--green-800);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem;padding-bottom:.375rem;border-bottom:1.5px solid var(--green-100)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.radio-group{display:flex;gap:.5rem;flex-wrap:wrap}
+.radio-btn{padding:.5rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Sarabun',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;background:var(--card);color:var(--text-muted);transition:all .15s}
+.radio-btn.selected{background:var(--green-50);border-color:var(--green-600);color:var(--green-700)}
+.calc-preview{background:var(--green-50);border:1.5px solid var(--green-200);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-top:.75rem}
+.calc-preview-title{font-size:.75rem;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.4px;margin-bottom:.5rem}
+.calc-row{display:flex;justify-content:space-between;align-items:center;font-size:.875rem;padding:.2rem 0}
+.calc-label{color:var(--text-muted)}
+.calc-value{font-weight:700;color:var(--green-800);font-family:'IBM Plex Mono',monospace}
+
+/* ── MODAL / DRAWER ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end}
+.modal-overlay.active{display:flex}
+.modal-sheet{background:var(--card);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--gray-200);border-radius:2px;margin:0 auto 1.25rem}
+.modal-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:1.25rem}
+.modal-actions{display:flex;gap:.625rem;margin-top:1.25rem}
+.modal-actions .btn{flex:1}
+
+/* ── REPORTS ── */
+.report-section{margin-bottom:1.25rem}
+.technician-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border-light);padding:.875rem 1rem;display:flex;align-items:center;gap:.875rem;box-shadow:var(--shadow);margin-bottom:.625rem}
+.tech-avatar{width:40px;height:40px;border-radius:50%;background:var(--teal-50);border:2px solid var(--teal-400);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.tech-stats{flex:1}
+.tech-name{font-weight:700;color:var(--text)}
+.tech-meta{font-size:.8rem;color:var(--text-muted);margin-top:.15rem}
+.chart-container{height:200px;position:relative;margin:.75rem 0}
+
+/* ── SETTINGS ── */
+.settings-group{margin-bottom:1.25rem}
+.settings-group-title{font-size:.8rem;font-weight:700;color:var(--green-700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem}
+.settings-item{display:flex;align-items:center;justify-content:space-between;padding:.875rem 0;border-bottom:1px solid var(--border-light)}
+.settings-item:last-child{border-bottom:none}
+.settings-label{font-weight:600;font-size:.9rem}
+.settings-desc{font-size:.78rem;color:var(--text-muted);margin-top:.1rem}
+.settings-input{width:80px;padding:.4rem .625rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Sarabun',sans-serif;font-size:.9rem;text-align:center}
+
+/* ── LOADER ── */
+.loader{display:inline-block;width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
+.loading-overlay.active{display:flex}
+.loading-overlay .spinner{width:40px;height:40px;border:3px solid var(--green-100);border-top-color:var(--green-700);border-radius:50%;animation:spin .7s linear infinite}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:500;display:flex;flex-direction:column;gap:.5rem;min-width:280px;max-width:90vw;pointer-events:none}
+.toast{background:var(--gray-800);color:#fff;padding:.75rem 1.125rem;border-radius:var(--radius);font-size:.875rem;font-weight:500;box-shadow:var(--shadow-md);animation:toastIn .25s ease;display:flex;align-items:center;gap:.5rem}
+.toast.success{background:var(--green-700)}
+.toast.error{background:var(--red-600)}
+.toast.warning{background:var(--amber-600)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── RESPONSIVE ── */
+@media(min-width:768px){
+.kpi-grid{grid-template-columns:repeat(4,1fr)}
+.form-row{grid-template-columns:1fr 1fr}
+#screen-app{max-width:480px;margin:0 auto;box-shadow:0 0 40px rgba(0,0,0,.15)}
+}
+</style>
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <p style="color:var(--green-700);font-weight:600;font-size:.9rem">กำลังโหลดข้อมูล…</p>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SCREEN: LOGIN                                   -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="screen active" id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="pig-icon">🐷</span>
+      <h1>นิพนธ์ฟาร์ม</h1>
+      <p>Smart Sow Productivity System</p>
+    </div>
+    <div id="login-error" class="login-error"></div>
+    <div class="form-group">
+      <label>ชื่อผู้ใช้</label>
+      <input type="text" id="login-username" placeholder="admin / staff1" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>รหัสผ่าน</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btn-login">
+      <span id="login-btn-text">เข้าสู่ระบบ</span>
+    </button>
+    <p style="font-size:.75rem;color:var(--text-hint);text-align:center;margin-top:1rem">
+      v1.0 — PigCHAMP Standard
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SCREEN: APP                                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="screen" id="screen-app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <span style="font-size:1.3rem">🐷</span>
+      <h2 id="header-page-title">Dashboard</h2>
+    </div>
+    <div class="header-right">
+      <span class="user-badge" id="header-user">คุณนิพนธ์</span>
+      <button class="header-btn" onclick="confirmLogout()" title="ออกจากระบบ">⬚</button>
+    </div>
+  </div>
+
+  <!-- Pages -->
+
+  <!-- ── PAGE: DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+
+    <div class="status-row">
+      <div class="status-pill pill-open">⚪ ว่าง <strong id="cnt-open">0</strong></div>
+      <div class="status-pill pill-served">🔵 ผสมแล้ว <strong id="cnt-served">0</strong></div>
+      <div class="status-pill pill-pregnant">🟡 ท้อง <strong id="cnt-pregnant">0</strong></div>
+      <div class="status-pill pill-lactating">🔴 เลี้ยงลูก <strong id="cnt-lactating">0</strong></div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">แม่พันธุ์ทั้งหมด</div>
+        <div class="kpi-value" id="kpi-total-sows">—</div>
+        <div class="kpi-sub">ตัวที่ active</div>
+      </div>
+      <div class="kpi-card accent-teal">
+        <div class="kpi-label">PSY</div>
+        <div class="kpi-value" id="kpi-psy">—</div>
+        <div class="kpi-sub">ลูก/แม่/ปี</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Live Born เฉลี่ย</div>
+        <div class="kpi-value" id="kpi-live-born">—</div>
+        <div class="kpi-sub">ตัว/ครอก</div>
+      </div>
+      <div class="kpi-card accent-amber">
+        <div class="kpi-label">WSI เฉลี่ย</div>
+        <div class="kpi-value" id="kpi-wsi">—</div>
+        <div class="kpi-sub">วันหย่านม→ผสม</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 รายการต้องทำวันนี้</span>
+        <span id="task-count-badge" style="background:var(--red-50);color:var(--red-600);font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:10px"></span>
+      </div>
+      <div id="tasks-container">
+        <div class="empty-state"><span class="empty-icon">✅</span>ไม่มีงานค้างวันนี้</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.75rem">
+      <div class="card-header">
+        <span class="card-title">📊 Live Born รายครอก (ล่าสุด)</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="chart-liveborn"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── PAGE: SOWS ── -->
+  <div class="page" id="page-sows">
+    <div class="search-bar">
+      <input type="search" id="sow-search" placeholder="🔍 ค้นหาเบอร์หู / รหัส…" oninput="filterSows()">
+      <button class="btn btn-primary btn-sm" onclick="showAddSowModal()">+ เพิ่ม</button>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="setStatusFilter('ALL',this)">ทั้งหมด</button>
+      <button class="filter-tab" onclick="setStatusFilter('OPEN',this)">ว่าง</button>
+      <button class="filter-tab" onclick="setStatusFilter('SERVED',this)">ผสมแล้ว</button>
+      <button class="filter-tab" onclick="setStatusFilter('PREGNANT',this)">ท้อง</button>
+      <button class="filter-tab" onclick="setStatusFilter('LACTATING',this)">เลี้ยงลูก</button>
+    </div>
+    <div id="sow-list-container">
+      <div class="empty-state"><span class="empty-icon">🐷</span>กำลังโหลด…</div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: SOW DETAIL ── -->
+  <div class="page" id="page-sow-detail">
+    <button class="btn btn-secondary btn-sm" onclick="showPage('sows')" style="margin-bottom:1rem">← กลับ</button>
+    <div id="sow-detail-content"></div>
+  </div>
+
+  <!-- ── PAGE: RECORD ── -->
+  <div class="page" id="page-record">
+    <div class="page-title">📝 บันทึกวงจรการผลิต</div>
+    <div class="filter-tabs" id="record-type-tabs">
+      <button class="filter-tab active" onclick="setRecordType('service',this)">🔬 ผสมพันธุ์</button>
+      <button class="filter-tab" onclick="setRecordType('preg_check',this)">🩺 ตรวจท้อง</button>
+      <button class="filter-tab" onclick="setRecordType('farrowing',this)">🐣 คลอด</button>
+      <button class="filter-tab" onclick="setRecordType('weaning',this)">🍼 หย่านม</button>
+    </div>
+
+    <!-- SERVICE FORM -->
+    <div id="form-service" class="record-form">
+      <div class="card">
+        <div class="form-section">
+          <div class="form-section-title">ข้อมูลการผสม</div>
+          <div class="form-group">
+            <label>รหัสแม่สุกร *</label>
+            <input type="text" id="svc-sow-id" placeholder="S001" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่ผสม *</label>
+              <input type="date" id="svc-date" oninput="calcServiceDates()">
+            </div>
+            <div class="form-group">
+              <label>พ่อพันธุ์ *</label>
+              <select id="svc-boar">
+                <option value="">— เลือก —</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>ผู้ผสม</label>
+              <input type="text" id="svc-technician" placeholder="ชื่อผู้ผสม">
+            </div>
+            <div class="form-group">
+              <label>วิธีผสม</label>
+              <div class="radio-group" style="margin-top:.4rem">
+                <button class="radio-btn selected" onclick="selectRadio(this,'svc-type','AI')">AI</button>
+                <button class="radio-btn" onclick="selectRadio(this,'svc-type','Natural')">Natural</button>
+              </div>
+              <input type="hidden" id="svc-type" value="AI">
+            </div>
+          </div>
+        </div>
+        <div id="svc-calc-preview" class="calc-preview" style="display:none">
+          <div class="calc-preview-title">📅 วันที่คำนวณอัตโนมัติ</div>
+          <div class="calc-row"><span class="calc-label">ตรวจท้องรอบ 1</span><span class="calc-value" id="calc-check1"></span></div>
+          <div class="calc-row"><span class="calc-label">ตรวจท้องรอบ 2</span><span class="calc-value" id="calc-check2"></span></div>
+          <div class="calc-row"><span class="calc-label">ย้ายเข้าเล้าคลอด</span><span class="calc-value" id="calc-move"></span></div>
+          <div class="calc-row"><span class="calc-label">กำหนดคลอด</span><span class="calc-value" id="calc-farrowing" style="color:var(--green-700)"></span></div>
+        </div>
+        <div class="form-group" style="margin-top:.875rem">
+          <label>หมายเหตุ</label>
+          <textarea id="svc-notes" rows="2" style="resize:none" placeholder="(ถ้ามี)"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitService()" style="margin-top:.5rem">
+          ✅ บันทึกการผสม
+        </button>
+      </div>
+    </div>
+
+    <!-- PREG CHECK FORM -->
+    <div id="form-preg_check" class="record-form" style="display:none">
+      <div class="card">
+        <div class="form-section">
+          <div class="form-section-title">ผลตรวจการตั้งท้อง</div>
+          <div class="form-group">
+            <label>รหัสวงจร (Cycle ID) *</label>
+            <input type="text" id="pc-cycle-id" placeholder="S001-3" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>รอบตรวจ</label>
+              <div class="radio-group" style="margin-top:.4rem">
+                <button class="radio-btn selected" onclick="selectRadio(this,'pc-round','1')">รอบ 1 (วัน 21)</button>
+                <button class="radio-btn" onclick="selectRadio(this,'pc-round','2')">รอบ 2 (วัน 42)</button>
+              </div>
+              <input type="hidden" id="pc-round" value="1">
+            </div>
+            <div class="form-group">
+              <label>วันที่ตรวจ *</label>
+              <input type="date" id="pc-date">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>ผลการตรวจ *</label>
+            <div class="radio-group" style="margin-top:.4rem">
+              <button class="radio-btn selected" onclick="selectRadio(this,'pc-result','POSITIVE')" style="background:var(--green-50);border-color:var(--green-600);color:var(--green-700)">✅ ท้อง</button>
+              <button class="radio-btn" onclick="selectRadio(this,'pc-result','NEGATIVE')" style="background:var(--red-50);border-color:var(--red-400);color:var(--red-600)">❌ ไม่ท้อง</button>
+              <button class="radio-btn" onclick="selectRadio(this,'pc-result','CONFIRMED')">🔵 ยืนยัน</button>
+            </div>
+            <input type="hidden" id="pc-result" value="POSITIVE">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="submitPregCheck()">✅ บันทึกผลตรวจ</button>
+      </div>
+    </div>
+
+    <!-- FARROWING FORM -->
+    <div id="form-farrowing" class="record-form" style="display:none">
+      <div class="card">
+        <div class="form-section">
+          <div class="form-section-title">ข้อมูลการคลอด</div>
+          <div class="form-group">
+            <label>รหัสวงจร (Cycle ID) *</label>
+            <input type="text" id="far-cycle-id" placeholder="S001-3" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่คลอดจริง *</label>
+              <input type="date" id="far-date">
+            </div>
+            <div class="form-group">
+              <label>น้ำหนักแรกเกิดรวม (kg)</label>
+              <input type="number" id="far-bw" placeholder="0.0" step="0.1" min="0">
+            </div>
+          </div>
+          <div class="form-section-title" style="margin-top:.875rem">จำนวนลูก</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.625rem">
+            <div class="form-group">
+              <label>มีชีวิต 🟢</label>
+              <input type="number" id="far-live" placeholder="0" min="0" style="background:var(--green-50)">
+            </div>
+            <div class="form-group">
+              <label>ตายโคม 🔴</label>
+              <input type="number" id="far-still" placeholder="0" min="0" style="background:var(--red-50)" value="0">
+            </div>
+            <div class="form-group">
+              <label>มัมมี่ ⚫</label>
+              <input type="number" id="far-mummy" placeholder="0" min="0" value="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>หมายเหตุ</label>
+            <textarea id="far-notes" rows="2" style="resize:none"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="submitFarrowing()">✅ บันทึกการคลอด</button>
+      </div>
+    </div>
+
+    <!-- WEANING FORM -->
+    <div id="form-weaning" class="record-form" style="display:none">
+      <div class="card">
+        <div class="form-section">
+          <div class="form-section-title">ข้อมูลการหย่านม</div>
+          <div class="form-group">
+            <label>รหัสวงจร (Cycle ID) *</label>
+            <input type="text" id="wean-cycle-id" placeholder="S001-3" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>วันที่หย่านม *</label>
+              <input type="date" id="wean-date">
+            </div>
+            <div class="form-group">
+              <label>จำนวนลูกหย่านม *</label>
+              <input type="number" id="wean-count" placeholder="0" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>น้ำหนักรวมตอนหย่านม (kg)</label>
+            <input type="number" id="wean-weight" placeholder="0.0" step="0.1" min="0">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="submitWeaning()">✅ บันทึกการหย่านม</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── PAGE: REPORTS ── -->
+  <div class="page" id="page-reports">
+    <div class="page-title">📋 รายงาน & วิเคราะห์</div>
+    <div class="card" style="margin-bottom:.75rem">
+      <div style="display:flex;gap:.625rem;align-items:center">
+        <input type="month" id="report-month" style="flex:1;padding:.6rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Sarabun',sans-serif">
+        <button class="btn btn-primary btn-sm" onclick="loadReports()">ดูรายงาน</button>
+      </div>
+    </div>
+    <div id="reports-content">
+      <div class="empty-state"><span class="empty-icon">📊</span>เลือกเดือน แล้วกด "ดูรายงาน"</div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: SETTINGS ── -->
+  <div class="page" id="page-settings">
+    <div class="page-title">⚙️ ตั้งค่าฟาร์ม</div>
+    <div id="settings-content">
+      <div class="empty-state"><span class="empty-icon">⚙️</span>กำลังโหลด…</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:.5rem;width:100%">💾 บันทึกการตั้งค่า</button>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">🏠</span><span>หน้าหลัก</span>
+    </button>
+    <button class="nav-item" onclick="showPage('sows')" id="nav-sows">
+      <span class="nav-icon">🐷</span><span>แม่พันธุ์</span>
+    </button>
+    <button class="nav-item" onclick="showPage('record')" id="nav-record">
+      <span class="nav-icon">✏️</span><span>บันทึก</span>
+    </button>
+    <button class="nav-item" onclick="showPage('reports')" id="nav-reports">
+      <span class="nav-icon">📊</span><span>รายงาน</span>
+    </button>
+    <button class="nav-item" onclick="showPage('settings')" id="nav-settings">
+      <span class="nav-icon">⚙️</span><span>ตั้งค่า</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- ── ADD SOW MODAL ── -->
+<div class="modal-overlay" id="modal-add-sow">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🐷 เพิ่มแม่สุกรใหม่</div>
+    <div class="form-group">
+      <label>เบอร์หู *</label>
+      <input type="text" id="new-ear-tag" placeholder="001">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>สายพันธุ์</label>
+        <input type="text" id="new-breed" placeholder="LW x L">
+      </div>
+      <div class="form-group">
+        <label>วันเกิด</label>
+        <input type="date" id="new-birth-date">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>วันที่เข้าฟาร์ม</label>
+        <input type="date" id="new-entry-date">
+      </div>
+      <div class="form-group">
+        <label>แหล่งที่มา</label>
+        <input type="text" id="new-source" placeholder="ฟาร์มพ่อแม่พันธุ์">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-sow')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="submitAddSow()">✅ เพิ่มแม่สุกร</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CULL CONFIRM MODAL ── -->
+<div class="modal-overlay" id="modal-cull">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚠️ ยืนยันการคัดทิ้ง</div>
+    <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1rem">แม่สุกร <strong id="cull-sow-label"></strong> จะถูกนำออกจากระบบ</p>
+    <div class="form-group">
+      <label>เหตุผลการคัดทิ้ง *</label>
+      <select id="cull-reason">
+        <option value="อายุมาก (Parity สูง)">อายุมาก (Parity สูง)</option>
+        <option value="ผลผลิตต่ำ">ผลผลิตต่ำ (Live Born น้อย)</option>
+        <option value="ปัญหาการสืบพันธุ์">ปัญหาการสืบพันธุ์ (กลับสัดซ้ำ)</option>
+        <option value="ปัญหาขา/โครงสร้าง">ปัญหาขา/โครงสร้าง</option>
+        <option value="ป่วย/ตาย">ป่วย/ตาย</option>
+        <option value="อื่นๆ">อื่นๆ</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-cull')">ยกเลิก</button>
+      <button class="btn btn-danger" onclick="confirmCull()">🗑️ คัดทิ้ง</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// CONFIG — แก้ไข URL นี้หลังจาก Deploy Google Apps Script
+// ══════════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let appState = {
+  user: null,
+  sows: [],
+  boars: [],
+  settings: {},
+  filteredStatus: 'ALL',
+  currentCullSow: null
+};
+
+let liveBornChart = null;
+
+// ══════════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════════
+async function api(action, data = {}) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...data })
+    });
+    return await res.json();
+  } catch (e) {
+    return { success: false, error: 'เชื่อมต่อ Server ไม่ได้: ' + e.message };
+  }
+}
+
+// Demo mode (ใช้เมื่อยังไม่ได้ตั้ง API_URL)
+function isDemoMode() {
+  return API_URL.includes('YOUR_SCRIPT_ID');
+}
+
+async function apiSafe(action, data = {}) {
+  if (isDemoMode()) return getDemoData(action, data);
+  showLoading(true);
+  try {
+    return await api(action, data);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// DEMO DATA (แสดงผลได้โดยไม่ต้อง Deploy)
+// ══════════════════════════════════════════════════════════
+function getDemoData(action) {
+  const demoSows = [
+    {sow_id:'S001',ear_tag:'001',breed:'LW×L',status:'PREGNANT',current_parity:4,location:'G-A01'},
+    {sow_id:'S002',ear_tag:'002',breed:'LW×L',status:'LACTATING',current_parity:2,location:'F-B03'},
+    {sow_id:'S003',ear_tag:'003',breed:'LW×L',status:'OPEN',current_parity:0,location:'G-A05'},
+    {sow_id:'S004',ear_tag:'004',breed:'LW×L',status:'SERVED',current_parity:6,location:'G-B12'},
+    {sow_id:'S005',ear_tag:'005',breed:'LW×L',status:'PREGNANT',current_parity:3,location:'G-A08'},
+    {sow_id:'S006',ear_tag:'006',breed:'LW×L',status:'OPEN',current_parity:1,location:'G-C02'},
+  ];
+  if (action === 'login') return {success:true,user:{username:'admin',role:'ADMIN',display_name:'คุณนิพนธ์ (Demo)'}};
+  if (action === 'getDashboard') return {
+    success:true,
+    statusCounts:{OPEN:62,SERVED:45,PREGNANT:68,LACTATING:25},
+    kpis:{total_sows:200,avg_live_born:12.4,avg_weaned:11.1,avg_wsi:5.8,psy:27.6,total_cycles:480},
+    chartData:{farrowingRateData:[
+      {label:'S001-3',live_born:12,stillborn:1,mummy:0},
+      {label:'S002-1',live_born:10,stillborn:0,mummy:0},
+      {label:'S003-2',live_born:13,stillborn:2,mummy:1},
+      {label:'S004-4',live_born:14,stillborn:0,mummy:0},
+      {label:'S005-2',live_born:11,stillborn:1,mummy:0},
+      {label:'S006-3',live_born:12,stillborn:0,mummy:1},
+      {label:'S007-5',live_born:9,stillborn:1,mummy:0},
+      {label:'S008-2',live_born:13,stillborn:0,mummy:0},
+    ]}
+  };
+  if (action === 'getTasksToday') return {
+    success:true,
+    today: new Date().toISOString().split('T')[0],
+    tasks:[
+      {type:'PREG_CHECK_1',sow_id:'S045',cycle_id:'S045-5',due_date:'2024-01-15',priority:'URGENT',label:'ตรวจท้องรอบ 1 — S045'},
+      {type:'MOVE_FARROWING',sow_id:'S023',cycle_id:'S023-3',due_date:'2024-01-15',priority:'URGENT',label:'ย้ายเข้าเล้าคลอด — S023'},
+      {type:'NEAR_FARROWING',sow_id:'S018',cycle_id:'S018-6',due_date:'2024-01-17',priority:'UPCOMING',label:'ใกล้ถึงกำหนดคลอด (2 วัน) — S018'},
+      {type:'PREG_CHECK_2',sow_id:'S067',cycle_id:'S067-2',due_date:'2024-01-16',priority:'UPCOMING',label:'ยืนยันการตั้งท้อง — S067'},
+      {type:'WEANING_DUE',sow_id:'S002',cycle_id:'S002-2',due_date:'2024-01-01',priority:'UPCOMING',label:'ครบกำหนดหย่านม (เลี้ยง 21 วัน) — S002'},
+    ]
+  };
+  if (action === 'getSows') return {success:true,sows:demoSows};
+  if (action === 'getBoars') return {success:true,boars:[
+    {boar_id:'B001',ear_tag:'P001',breed:'Duroc'},
+    {boar_id:'B002',ear_tag:'P002',breed:'Duroc'},
+    {boar_id:'B003',ear_tag:'P003',breed:'Hampshire'},
+  ]};
+  if (action === 'getSowDetail') return {
+    success:true,
+    sow: demoSows[0],
+    cycles:[
+      {cycle_id:'S001-4',parity:4,service_date:'2023-09-01',actual_farrowing_date:'2023-12-24',live_born:13,weaned_count:12,lactation_days:22,wsi_days:5},
+      {cycle_id:'S001-3',parity:3,service_date:'2023-04-10',actual_farrowing_date:'2023-08-02',live_born:12,weaned_count:11,lactation_days:21,wsi_days:6},
+      {cycle_id:'S001-2',parity:2,service_date:'2022-11-05',actual_farrowing_date:'2023-03-01',live_born:10,weaned_count:10,lactation_days:21,wsi_days:7},
+    ],
+    cullWarnings:[]
+  };
+  if (action === 'getSettings') return {success:true,settings:[
+    {key:'GESTATION_DAYS',value:'114',label:'วันอุ้มท้อง'},
+    {key:'LACTATION_TARGET',value:'21',label:'เป้าหมายวันเลี้ยงลูก'},
+    {key:'WSI_TARGET',value:'7',label:'เป้าหมาย WSI'},
+    {key:'CULL_MAX_PARITY',value:'8',label:'คัดทิ้งเมื่อ Parity ≥'},
+    {key:'CULL_MIN_LIVE_BORN',value:'10',label:'คัดทิ้งเมื่อ Live Born เฉลี่ย <'},
+    {key:'PSY_TARGET',value:'28',label:'เป้าหมาย PSY'},
+  ]};
+  if (action === 'getReports') return {success:true,
+    summary:{total_farrowings:24,avg_live_born:12.1,avg_weaned:11.0,total_live_born:290,total_weaned:264},
+    technicianStats:{
+      'สมชาย':{services:80,farrowings:68,total_live_born:816},
+      'สมหญิง':{services:72,farrowings:60,total_live_born:726},
+    },
+    pendingCull:[
+      {sow_id:'S088',ear_tag:'088',current_parity:8},
+      {sow_id:'S112',ear_tag:'112',current_parity:9},
+    ],
+    recentCycles:[]
+  };
+  return {success:true};
+}
+
+// ══════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════
+function showLoading(v) {
+  document.getElementById('loading-overlay').classList.toggle('active', v);
+}
+
+function showToast(msg, type = 'success', duration = 3000) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✅', error:'❌', warning:'⚠️'};
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const nav = document.getElementById('nav-' + name);
+  if (nav) nav.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard',sows:'ทะเบียนแม่พันธุ์',
+    record:'บันทึกข้อมูล',reports:'รายงาน',settings:'ตั้งค่า',
+    'sow-detail':'ประวัติแม่สุกร'
+  };
+  document.getElementById('header-page-title').textContent = titles[name] || 'นิพนธ์ฟาร์ม';
+  window.scrollTo(0,0);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function selectRadio(btn, hiddenId, value) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.radio-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(hiddenId).value = value;
+}
+
+function getStatusLabel(s) {
+  const m = {OPEN:'ว่าง',SERVED:'ผสมแล้ว',PREGNANT:'ท้อง',LACTATING:'เลี้ยงลูก',CULLED:'คัดทิ้ง'};
+  return m[s] || s;
+}
+function getStatusColor(s) {
+  const m = {
+    OPEN:'background:var(--green-50);color:var(--green-700)',
+    SERVED:'background:var(--teal-50);color:var(--teal-600)',
+    PREGNANT:'background:var(--amber-50);color:var(--amber-600)',
+    LACTATING:'background:var(--red-50);color:var(--red-600)',
+    CULLED:'background:var(--gray-100);color:var(--gray-600)'
+  };
+  return m[s] || '';
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt)) return d;
+  return dt.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function addDaysToDate(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  if (!u || !p) { errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'; errEl.style.display = 'block'; return; }
+
+  document.getElementById('login-btn-text').innerHTML = '<span class="loader"></span>';
+  const res = await apiSafe('login', {username: u, password: p});
+  document.getElementById('login-btn-text').textContent = 'เข้าสู่ระบบ';
+
+  if (res.success) {
+    appState.user = res.user;
+    document.getElementById('header-user').textContent = res.user.display_name;
+    showScreen('screen-app');
+    if (isDemoMode()) showToast('🎮 Demo Mode — ข้อมูลตัวอย่าง (ยังไม่ได้เชื่อม API)', 'warning', 6000);
+    initApp();
+  } else {
+    errEl.textContent = res.error || 'เข้าสู่ระบบไม่สำเร็จ';
+    errEl.style.display = 'block';
+  }
+});
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-login').click();
+});
+
+function confirmLogout() {
+  if (confirm('ออกจากระบบ?')) {
+    appState.user = null;
+    showScreen('screen-login');
+    document.getElementById('login-password').value = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+async function initApp() {
+  await Promise.all([loadDashboard(), loadBoars()]);
+  loadSows();
+}
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════
+async function loadDashboard() {
+  const [dashRes, taskRes] = await Promise.all([
+    apiSafe('getDashboard'),
+    apiSafe('getTasksToday')
+  ]);
+
+  if (dashRes.success) {
+    const { statusCounts, kpis, chartData } = dashRes;
+    document.getElementById('cnt-open').textContent = statusCounts.OPEN || 0;
+    document.getElementById('cnt-served').textContent = statusCounts.SERVED || 0;
+    document.getElementById('cnt-pregnant').textContent = statusCounts.PREGNANT || 0;
+    document.getElementById('cnt-lactating').textContent = statusCounts.LACTATING || 0;
+    document.getElementById('kpi-total-sows').textContent = kpis.total_sows;
+    document.getElementById('kpi-psy').textContent = kpis.psy;
+    document.getElementById('kpi-live-born').textContent = kpis.avg_live_born;
+    document.getElementById('kpi-wsi').textContent = kpis.avg_wsi;
+
+    // Chart
+    if (chartData && chartData.farrowingRateData.length > 0) {
+      const cd = chartData.farrowingRateData;
+      const ctx = document.getElementById('chart-liveborn').getContext('2d');
+      if (liveBornChart) liveBornChart.destroy();
+      liveBornChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: cd.map(c => c.label),
+          datasets: [
+            {label: 'มีชีวิต', data: cd.map(c => c.live_born), backgroundColor: '#639922', borderRadius: 4},
+            {label: 'ตายโคม', data: cd.map(c => c.stillborn), backgroundColor: '#E24B4A', borderRadius: 4},
+            {label: 'มัมมี่', data: cd.map(c => c.mummy), backgroundColor: '#888780', borderRadius: 4},
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { font: { family: 'Sarabun', size: 11 }, boxWidth: 12 } } },
+          scales: {
+            x: { stacked: false, ticks: { font: { family: 'Sarabun', size: 10 }, maxRotation: 45 } },
+            y: { beginAtZero: true, ticks: { font: { family: 'Sarabun', size: 11 } } }
+          }
+        }
+      });
+    }
+  }
+
+  if (taskRes.success) renderTasks(taskRes.tasks);
+}
+
+function renderTasks(tasks) {
+  const c = document.getElementById('tasks-container');
+  const badge = document.getElementById('task-count-badge');
+  const nav = document.getElementById('nav-dashboard');
+
+  if (!tasks || tasks.length === 0) {
+    c.innerHTML = '<div class="empty-state"><span class="empty-icon">✅</span>ไม่มีงานค้างวันนี้</div>';
+    badge.textContent = '';
+    const nb = nav.querySelector('.badge');
+    if (nb) nb.remove();
+    return;
+  }
+
+  badge.textContent = `${tasks.length} รายการ`;
+  let nb = nav.querySelector('.badge');
+  if (!nb) { nb = document.createElement('span'); nb.className = 'badge'; nav.appendChild(nb); }
+  nb.textContent = tasks.length;
+
+  const typeIcons = {
+    PREG_CHECK_1:'🩺', PREG_CHECK_2:'🔬',
+    MOVE_FARROWING:'🏠', NEAR_FARROWING:'🐣', WEANING_DUE:'🍼'
+  };
+
+  c.innerHTML = tasks.map(t => `
+    <div class="task-item ${t.priority === 'URGENT' ? 'urgent' : ''}" onclick="goToSow('${t.sow_id}')">
+      <span class="task-icon">${typeIcons[t.type] || '📋'}</span>
+      <div style="flex:1">
+        <div class="task-label">${t.label}</div>
+        <div class="task-due">กำหนด ${formatDate(t.due_date)}</div>
+        <span class="task-badge ${t.priority === 'URGENT' ? 'badge-urgent' : 'badge-upcoming'}">
+          ${t.priority === 'URGENT' ? 'ด่วน!' : 'เร็วๆ นี้'}
+        </span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// SOWS
+// ══════════════════════════════════════════════════════════
+async function loadSows() {
+  const res = await apiSafe('getSows');
+  if (res.success) {
+    appState.sows = res.sows;
+    renderSowList();
+  }
+}
+
+function setStatusFilter(status, btn) {
+  appState.filteredStatus = status;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderSowList();
+}
+
+function filterSows() { renderSowList(); }
+
+function renderSowList() {
+  const search = (document.getElementById('sow-search')?.value || '').toLowerCase();
+  let list = appState.sows;
+  if (appState.filteredStatus !== 'ALL') list = list.filter(s => s.status === appState.filteredStatus);
+  if (search) list = list.filter(s =>
+    String(s.ear_tag).toLowerCase().includes(search) ||
+    String(s.sow_id).toLowerCase().includes(search)
+  );
+
+  const c = document.getElementById('sow-list-container');
+  if (list.length === 0) {
+    c.innerHTML = '<div class="empty-state"><span class="empty-icon">🐷</span>ไม่พบข้อมูล</div>';
+    return;
+  }
+  c.innerHTML = list.map(s => `
+    <div class="sow-item" onclick="goToSow('${s.sow_id}')">
+      <div class="sow-avatar">🐷</div>
+      <div class="sow-info">
+        <div class="sow-tag">เบอร์ ${s.ear_tag} <span style="font-weight:400;color:var(--text-muted);font-size:.8rem">(${s.sow_id})</span></div>
+        <div class="sow-meta">${s.breed || '—'} · ท้องที่ ${s.current_parity} · ${s.location || '—'}</div>
+      </div>
+      <span class="sow-status" style="${getStatusColor(s.status)}">${getStatusLabel(s.status)}</span>
+    </div>
+  `).join('');
+}
+
+async function goToSow(sowId) {
+  showLoading(true);
+  const res = await apiSafe('getSowDetail', {sow_id: sowId});
+  showLoading(false);
+  if (!res.success) { showToast(res.error, 'error'); return; }
+
+  const { sow, cycles, cullWarnings } = res;
+  const detail = document.getElementById('sow-detail-content');
+
+  const cullHtml = cullWarnings && cullWarnings.length > 0 ? `
+    <div class="cull-alert card" style="border-color:var(--red-100)">
+      <div class="cull-alert-title">⚠️ แนะนำให้คัดทิ้ง</div>
+      ${cullWarnings.map(w => `<div class="cull-alert-item">• ${w}</div>`).join('')}
+      <button class="btn btn-danger btn-sm" style="margin-top:.625rem;width:100%" 
+        onclick="openCullModal('${sow.sow_id}','เบอร์ ${sow.ear_tag}')">
+        🗑️ คัดทิ้งแม่สุกรนี้
+      </button>
+    </div>
+  ` : '';
+
+  const cycleRows = cycles.slice(0, 8).map(c => `
+    <div class="cycle-row">
+      <span style="font-weight:700;color:var(--green-700)">T${c.parity}</span>
+      <span>${formatDate(c.actual_farrowing_date) || '(รอคลอด)'}</span>
+      <span style="color:var(--green-700)">${c.live_born || '—'} ตัว</span>
+      <span>${c.weaned_count || '—'} หย่านม</span>
+    </div>
+  `).join('');
+
+  detail.innerHTML = `
+    <div class="card">
+      <div class="detail-header">
+        <h3>เบอร์หู ${sow.ear_tag} · ${sow.sow_id}</h3>
+        <p>${sow.breed || '—'} · ${getStatusLabel(sow.status)} · คอก ${sow.location || '—'}</p>
+      </div>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">ท้องปัจจุบัน</div><div class="info-value" style="color:var(--green-700);font-size:1.25rem">${sow.current_parity}</div></div>
+        <div class="info-item"><div class="info-label">สถานะ</div><div class="info-value"><span style="${getStatusColor(sow.status)};padding:3px 10px;border-radius:10px;font-size:.85rem">${getStatusLabel(sow.status)}</span></div></div>
+        <div class="info-item"><div class="info-label">วันเกิด</div><div class="info-value">${formatDate(sow.birth_date)}</div></div>
+        <div class="info-item"><div class="info-label">วันเข้าฟาร์ม</div><div class="info-value">${formatDate(sow.entry_date)}</div></div>
+      </div>
+      ${cullHtml}
+      <div class="cycle-history">
+        <div class="card-title" style="margin-bottom:.625rem">📋 ประวัติการผลิต</div>
+        <div class="cycle-row header"><span>ท้อง</span><span>วันคลอด</span><span>มีชีวิต</span><span>หย่านม</span></div>
+        ${cycleRows || '<div style="color:var(--text-muted);font-size:.875rem;padding:.75rem 0">ยังไม่มีประวัติ</div>'}
+      </div>
+    </div>
+  `;
+
+  showPage('sow-detail');
+}
+
+function openCullModal(sowId, label) {
+  appState.currentCullSow = sowId;
+  document.getElementById('cull-sow-label').textContent = label;
+  openModal('modal-cull');
+}
+
+async function confirmCull() {
+  const reason = document.getElementById('cull-reason').value;
+  if (!appState.currentCullSow) return;
+  const res = await apiSafe('cullSow', {
+    sow_id: appState.currentCullSow,
+    reason,
+    recorded_by: appState.user?.display_name
+  });
+  closeModal('modal-cull');
+  if (res.success) {
+    showToast(res.message, 'success');
+    loadSows();
+    showPage('sows');
+  } else {
+    showToast(res.error, 'error');
+  }
+}
+
+function showAddSowModal() { openModal('modal-add-sow'); }
+
+async function submitAddSow() {
+  const ear_tag = document.getElementById('new-ear-tag').value.trim();
+  if (!ear_tag) { showToast('กรุณากรอกเบอร์หู', 'error'); return; }
+  const res = await apiSafe('addSow', {
+    ear_tag,
+    breed: document.getElementById('new-breed').value,
+    birth_date: document.getElementById('new-birth-date').value,
+    entry_date: document.getElementById('new-entry-date').value,
+    source: document.getElementById('new-source').value
+  });
+  closeModal('modal-add-sow');
+  if (res.success) { showToast(res.message, 'success'); loadSows(); }
+  else showToast(res.error, 'error');
+}
+
+// ══════════════════════════════════════════════════════════
+// BOARS
+// ══════════════════════════════════════════════════════════
+async function loadBoars() {
+  const res = await apiSafe('getBoars');
+  if (res.success) {
+    appState.boars = res.boars;
+    const sel = document.getElementById('svc-boar');
+    sel.innerHTML = '<option value="">— เลือกพ่อพันธุ์ —</option>' +
+      res.boars.map(b => `<option value="${b.boar_id}">${b.ear_tag} (${b.breed})</option>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// RECORD
+// ══════════════════════════════════════════════════════════
+function setRecordType(type, btn) {
+  document.querySelectorAll('.record-form').forEach(f => f.style.display = 'none');
+  document.getElementById('form-' + type).style.display = 'block';
+  document.querySelectorAll('#record-type-tabs .filter-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function calcServiceDates() {
+  const d = document.getElementById('svc-date').value;
+  if (!d) return;
+  const s = appState.settings;
+  const gest = parseInt(s.GESTATION_DAYS || 114);
+  const c1 = parseInt(s.PREG_CHECK_DAY1 || 21);
+  const c2 = parseInt(s.PREG_CHECK_DAY2 || 42);
+  const mv = parseInt(s.MOVE_FARROWING_DAY || 110);
+
+  document.getElementById('calc-check1').textContent = formatDate(addDaysToDate(d, c1));
+  document.getElementById('calc-check2').textContent = formatDate(addDaysToDate(d, c2));
+  document.getElementById('calc-move').textContent = formatDate(addDaysToDate(d, mv));
+  document.getElementById('calc-farrowing').textContent = formatDate(addDaysToDate(d, gest));
+  document.getElementById('svc-calc-preview').style.display = 'block';
+}
+
+async function submitService() {
+  const sowId = document.getElementById('svc-sow-id').value.trim();
+  const date = document.getElementById('svc-date').value;
+  const boar = document.getElementById('svc-boar').value;
+  if (!sowId || !date || !boar) { showToast('กรุณากรอกข้อมูลให้ครบ (*)', 'error'); return; }
+  const res = await apiSafe('recordService', {
+    sow_id: sowId, service_date: date, boar_id: boar,
+    technician: document.getElementById('svc-technician').value,
+    service_type: document.getElementById('svc-type').value,
+    notes: document.getElementById('svc-notes').value
+  });
+  if (res.success) {
+    showToast(res.message, 'success');
+    document.getElementById('svc-sow-id').value = '';
+    document.getElementById('svc-calc-preview').style.display = 'none';
+    loadDashboard(); loadSows();
+  } else showToast(res.error, 'error');
+}
+
+async function submitPregCheck() {
+  const cycleId = document.getElementById('pc-cycle-id').value.trim();
+  const date = document.getElementById('pc-date').value;
+  const round = document.getElementById('pc-round').value;
+  const result = document.getElementById('pc-result').value;
+  if (!cycleId || !date) { showToast('กรุณากรอกข้อมูลให้ครบ (*)', 'error'); return; }
+  const res = await apiSafe('recordPregCheck', {cycle_id: cycleId, check_round: round, check_date: date, result});
+  if (res.success) { showToast(res.message, 'success'); loadDashboard(); loadSows(); }
+  else showToast(res.error, 'error');
+}
+
+async function submitFarrowing() {
+  const cycleId = document.getElementById('far-cycle-id').value.trim();
+  const date = document.getElementById('far-date').value;
+  const live = document.getElementById('far-live').value;
+  if (!cycleId || !date || !live) { showToast('กรุณากรอกข้อมูลให้ครบ (*)', 'error'); return; }
+  const res = await apiSafe('recordFarrowing', {
+    cycle_id: cycleId, farrowing_date: date,
+    live_born: parseInt(live) || 0,
+    stillborn: parseInt(document.getElementById('far-still').value) || 0,
+    mummy: parseInt(document.getElementById('far-mummy').value) || 0,
+    birth_weight_total: parseFloat(document.getElementById('far-bw').value) || 0,
+    notes: document.getElementById('far-notes').value
+  });
+  if (res.success) {
+    showToast(`${res.message} (อุ้มท้อง ${res.gestation_length} วัน)`, 'success');
+    document.getElementById('far-cycle-id').value = '';
+    loadDashboard(); loadSows();
+  } else showToast(res.error, 'error');
+}
+
+async function submitWeaning() {
+  const cycleId = document.getElementById('wean-cycle-id').value.trim();
+  const date = document.getElementById('wean-date').value;
+  const count = document.getElementById('wean-count').value;
+  if (!cycleId || !date || !count) { showToast('กรุณากรอกข้อมูลให้ครบ (*)', 'error'); return; }
+  const res = await apiSafe('recordWeaning', {
+    cycle_id: cycleId, weaning_date: date,
+    weaned_count: parseInt(count) || 0,
+    weaning_weight_total: parseFloat(document.getElementById('wean-weight').value) || 0
+  });
+  if (res.success) {
+    showToast(res.message, 'success');
+    document.getElementById('wean-cycle-id').value = '';
+    loadDashboard(); loadSows();
+  } else showToast(res.error, 'error');
+}
+
+// ══════════════════════════════════════════════════════════
+// REPORTS
+// ══════════════════════════════════════════════════════════
+async function loadReports() {
+  const month = document.getElementById('report-month').value;
+  const res = await apiSafe('getReports', {month});
+  if (!res.success) { showToast(res.error, 'error'); return; }
+
+  const { summary, technicianStats, pendingCull } = res;
+  const c = document.getElementById('reports-content');
+
+  const techHtml = Object.keys(technicianStats || {}).map(name => {
+    const t = technicianStats[name];
+    const rate = t.services > 0 ? Math.round(t.farrowings / t.services * 100) : 0;
+    const avgLB = t.farrowings > 0 ? (t.total_live_born / t.farrowings).toFixed(1) : '—';
+    return `
+      <div class="technician-card">
+        <div class="tech-avatar">👤</div>
+        <div class="tech-stats">
+          <div class="tech-name">${name}</div>
+          <div class="tech-meta">ผสม ${t.services} ครั้ง · คลอด ${t.farrowings} ครั้ง · Farr. Rate ${rate}% · Live Born เฉลี่ย ${avgLB}</div>
+        </div>
+      </div>
+    `;
+  }).join('') || '<div class="empty-state" style="padding:1rem">ไม่มีข้อมูล</div>';
+
+  const cullHtml = (pendingCull || []).map(s => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.625rem 0;border-bottom:1px solid var(--border-light)">
+      <span>เบอร์ ${s.ear_tag} (${s.sow_id}) · ท้องที่ ${s.current_parity}</span>
+      <button class="btn btn-danger btn-sm" onclick="openCullModal('${s.sow_id}','เบอร์ ${s.ear_tag}')">คัดทิ้ง</button>
+    </div>
+  `).join('') || '<p style="color:var(--text-muted);font-size:.875rem">ไม่มีแม่สุกรที่ควรคัดทิ้ง</p>';
+
+  c.innerHTML = `
+    <div class="card" style="margin-bottom:.75rem">
+      <div class="card-title" style="margin-bottom:.875rem">📈 สรุปประสิทธิภาพ ${month ? `เดือน ${month}` : 'ทั้งหมด'}</div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">ครอกที่คลอด</div><div class="kpi-value">${summary.total_farrowings}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Live Born เฉลี่ย</div><div class="kpi-value" style="color:var(--green-700)">${summary.avg_live_born}</div></div>
+        <div class="kpi-card"><div class="kpi-label">หย่านมเฉลี่ย</div><div class="kpi-value" style="color:var(--teal-600)">${summary.avg_weaned}</div></div>
+        <div class="kpi-card"><div class="kpi-label">ลูกหย่านมรวม</div><div class="kpi-value" style="color:var(--amber-600)">${summary.total_weaned}</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:.75rem">
+      <div class="card-title" style="margin-bottom:.875rem">👤 ประสิทธิภาพผู้ผสม</div>
+      ${techHtml}
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:.875rem">⚠️ แม่สุกรรอคัดทิ้ง</div>
+      ${cullHtml}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════
+async function loadSettings() {
+  const res = await apiSafe('getSettings');
+  if (!res.success) return;
+
+  const settingsMap = {};
+  (res.settings || []).forEach(s => { settingsMap[s.key] = s; });
+  appState.settings = {};
+  (res.settings || []).forEach(s => { appState.settings[s.key] = s.value; });
+
+  const display = [
+    {key:'GESTATION_DAYS',label:'วันอุ้มท้องมาตรฐาน',desc:'ปกติ 114 วัน (สามารถปรับได้ตามสายพันธุ์)',unit:'วัน'},
+    {key:'LACTATION_TARGET',label:'เป้าหมายวันเลี้ยงลูก',desc:'มาตรฐาน 21-24 วัน',unit:'วัน'},
+    {key:'WSI_TARGET',label:'เป้าหมาย WSI',desc:'จำนวนวันจากหย่านมถึงผสม',unit:'วัน'},
+    {key:'PREG_CHECK_DAY1',label:'ตรวจท้องรอบ 1 (วันที่)',desc:'นับจากวันผสม',unit:'วัน'},
+    {key:'PREG_CHECK_DAY2',label:'ตรวจท้องรอบ 2 (วันที่)',desc:'นับจากวันผสม',unit:'วัน'},
+    {key:'MOVE_FARROWING_DAY',label:'ย้ายเข้าเล้าคลอด (วันที่)',desc:'นับจากวันผสม',unit:'วัน'},
+    {key:'CULL_MAX_PARITY',label:'คัดทิ้งเมื่อท้องที่ ≥',desc:'แนะนำ 8 ท้อง',unit:'ท้อง'},
+    {key:'CULL_MIN_LIVE_BORN',label:'คัดทิ้งเมื่อ Live Born เฉลี่ย <',desc:'เฉลี่ย 3 ท้องล่าสุด',unit:'ตัว'},
+    {key:'PSY_TARGET',label:'เป้าหมาย PSY',desc:'ลูกสุกรหย่านมต่อแม่ต่อปี',unit:'ตัว'},
+  ];
+
+  document.getElementById('settings-content').innerHTML = `
+    <div class="card">
+      <div class="settings-group">
+        <div class="settings-group-title">วงจรการผลิต</div>
+        ${display.map(s => `
+          <div class="settings-item">
+            <div>
+              <div class="settings-label">${s.label}</div>
+              <div class="settings-desc">${s.desc}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <input type="number" class="settings-input" id="setting-${s.key}" 
+                value="${appState.settings[s.key] || ''}" min="0">
+              <span style="font-size:.8rem;color:var(--text-muted)">${s.unit}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      ${isDemoMode() ? `<div style="background:var(--amber-50);border:1px solid var(--amber-200);border-radius:var(--radius-sm);padding:.75rem;font-size:.8rem;color:var(--amber-600);margin-top:.75rem">⚠️ Demo Mode — การบันทึกจะไม่มีผล กรุณา Deploy Google Apps Script ก่อน</div>` : ''}
+    </div>
+  `;
+}
+
+async function saveSettings() {
+  const keys = ['GESTATION_DAYS','LACTATION_TARGET','WSI_TARGET','PREG_CHECK_DAY1','PREG_CHECK_DAY2','MOVE_FARROWING_DAY','CULL_MAX_PARITY','CULL_MIN_LIVE_BORN','PSY_TARGET'];
+  const settings = {};
+  keys.forEach(k => {
+    const el = document.getElementById('setting-' + k);
+    if (el) settings[k] = el.value;
+  });
+  const res = await apiSafe('updateSettings', {settings});
+  if (res.success) {
+    appState.settings = {...appState.settings, ...settings};
+    showToast('บันทึกการตั้งค่าสำเร็จ', 'success');
+  } else showToast(res.error, 'error');
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE-SPECIFIC INIT
+// ══════════════════════════════════════════════════════════
+const origShowPage = showPage;
+window.showPage = function(name) {
+  origShowPage(name);
+  if (name === 'settings') loadSettings();
+  if (name === 'sows') { if (appState.sows.length === 0) loadSows(); }
+};
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); });
+});
+
+// Set today's date defaults
+window.addEventListener('load', () => {
+  const today = new Date().toISOString().split('T')[0];
+  ['svc-date','pc-date','far-date','wean-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = today;
+  });
+  const monthEl = document.getElementById('report-month');
+  if (monthEl) monthEl.value = today.substring(0, 7);
+});
+
+// Demo quick login
+if (window.location.href.includes('localhost') || window.location.href.includes('github.io')) {
+  document.getElementById('login-username').value = 'admin';
+  document.getElementById('login-password').value = 'admin1234';
+}
+</script>
+</body>
+</html>
